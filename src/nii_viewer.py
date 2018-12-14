@@ -9,7 +9,7 @@ def get_slope_inter(img):
     return img.dataobj.slope, img.dataobj.inter
 
 # Testing file
-file_path = r"G:\AML - project\data\Training_Batch1\media\nas\01_Datasets\CT\LITS\Training Batch 1\volume-1.nii"
+file_path = r"data\Training_Batch1\media\nas\01_Datasets\CT\LITS\Training Batch 1\volume-1.nii"
 
 # load the header to check what the linear transformation should be.
 img = nib.load(file_path)
