@@ -6,8 +6,8 @@ Warnings = 0;
 i_max = 27;
 for i = 0:i_max
     disp(['i = ', num2str(i)])
-    file_vol = ['G:\AML - project\aml_project_ctscans\data\Training_Batch1\media\nas\01_Datasets\CT\LITS\Training Batch 1\volume-',num2str(i),'.nii'];
-    file_seg = ['G:\AML - project\aml_project_ctscans\data\Training_Batch1\media\nas\01_Datasets\CT\LITS\Training Batch 1\segmentation-',num2str(i),'.nii'];
+    file_vol = ['..\data\Training_Batch1\volume-',num2str(i),'.nii'];
+    file_seg = ['..\data\Training_Batch1\segmentation-',num2str(i),'.nii'];
     CT_vol = niftiread(file_vol);
     CT_seg = niftiread(file_seg);
 
