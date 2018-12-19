@@ -2,7 +2,7 @@ import os
 import numpy as np
 import nibabel as nib
 from nilearn import plotting
-import cv2
+#import cv2
 
 def get_slope_inter(img):
     # Return the slope and y-intercept of the data.
@@ -34,6 +34,7 @@ pic[pic > 250] = 250
 pic = np.round(255 * ( pic + 250 ) / 500).astype('uint8', copy=False)
 print(np.min(pic), np.max(pic), np.std(pic), np.mean(pic), pic.shape)
 
+'''
 # Show a single slice with opencv
 while True:
     cv2.imshow('testing MRI', pic)
@@ -41,3 +42,4 @@ while True:
     if cv2.waitKey(25) & 0xFF == ord('q'):
         cv2.destroyAllWindows()
         break
+'''
