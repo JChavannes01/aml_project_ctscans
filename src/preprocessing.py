@@ -43,8 +43,6 @@ def preprocess_images():
     output_dimension = (128, 128)  # desired output size of each layer
 
     for i, f in enumerate(volume_files):
-        if i > 0:
-            break
         print(f'Extracting images from {f}')
         nii_file = nib.load(os.path.join(train_data_dir, f))
         data = nii_file.get_fdata()
@@ -84,7 +82,7 @@ def load_test_images():
 
     # Show the testing image with opencv
     while True:
-        cv2.imshow('testing MRI', cv2.resize(images[60], dsize=(512, 512)))
+        cv2.imshow('testing MRI', cv2.resize(images[72], dsize=(512, 512)))
 
         if cv2.waitKey(25) & 0xFF == ord('q'):
             cv2.destroyAllWindows()
@@ -96,9 +94,9 @@ def main():
         os.mkdir(output_dir)
 
     preprocess_labels()
-    # preprocess_images()
+    preprocess_images()
     load_test_labels()
-    # load_test_images()
+    load_test_images()
 
 
 if __name__ == "__main__":
