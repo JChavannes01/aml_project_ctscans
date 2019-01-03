@@ -6,10 +6,10 @@ import gzip
 import cv2
 
 # Directory where the .nii files are located.
-train_data_dir = r"data\Training_Batch1"
+train_data_dir = r"data\Training_Batch2"
 
 # Directory where the preprocessed data will be stored.
-output_dir = r"data\Training_Batch1\preprocessed"
+output_dir = r"data\Training_Batch2\preprocessed"
 
 
 def preprocess_labels():
@@ -71,7 +71,7 @@ def preprocess_images():
 
 
 def load_test_labels():
-    labels = np.load(os.path.join(output_dir, 'labels-0.npy'))
+    labels = np.load(os.path.join(output_dir, 'labels-28.npy'))
     print(labels.shape)
 
 

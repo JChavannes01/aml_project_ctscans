@@ -1,0 +1,9 @@
+Observations second batch:
+Liver and lesion pixels have partly negative pixel values
+Some CT scans doesn't contain lesions
+Sometimes the lesion pixels have a higher pixel value than the liver (like 121)
+The additive offset is always 0 and the scaling is always 1
+
+Observations first batch:
+The additive offset is -1024 and the scaling is always 1
+All CT scans contain lesions
