@@ -7,6 +7,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix
 import cv2
 import pickle
+import matplotlib.pyplot as plt
 
 do_training = False
 
@@ -130,6 +131,17 @@ def load_classifier():
     N_liver = N_liver_train + N_liver_test
     print(f'Number of slices containing liver (all data): {N_liver}')
     print(f'Number of slices containing no liver (all data): {labels_train.size + labels_test.size - N_liver}')
+
+    # Show accuracy on train and test data
+    plt.figure(figsize=[8,6])
+    plt.plot(history['acc'],'r',linewidth=3.0)
+    plt.plot(history['val_acc'],'b',linewidth=3.0)
+    plt.legend(['Training Accuracy', 'Validation Accuracy'],fontsize=18)
+    plt.xlabel('Epochs ',fontsize=16)
+    plt.ylabel('Accuracy',fontsize=16)
+    plt.title('Accuracy Curves',fontsize=16)
+    plt.grid()
+    plt.show()
     
     # Show the testing image with opencv
     j = 0
