@@ -7,7 +7,7 @@ from sklearn.model_selection import train_test_split
 import cv2
 import pickle
 
-do_training = True
+do_training = False
 
 # Directory where the preprocessed data is stored.
 #output_dir = r"data\Training_Batch1\preprocessed"
@@ -84,25 +84,33 @@ def train_classifier():
               metrics=['accuracy'])
 
     history = model.fit(images_train, labels_train, batch_size=128, epochs=25, validation_data=(images_test,labels_test))#batch_size=128
-    results = model.evaluate(images_test, labels_test)
 
     model.save(r"models/CNN.h5")
     with open(r"models/CNN.pkl", "wb") as f:
         pickle.dump([images_train, images_test, labels_train, labels_test, history.history], f)
-    '''
-    # Getting back the objects:
-    with open('objs.pkl') as f:  # Python 3: open(..., 'rb')
-        obj0, obj1, obj2 = pickle.load(f)
-    '''
+
+def load_classifier():
+    model = tf.keras.models.load_model(r"models/CNN.h5")
+    
+    with open(r"models/CNN.pkl", 'rb') as f:
+        images_train, images_test, labels_train, labels_test, history = pickle.load(f)
+    
+    results = model.evaluate(images_test, labels_test)
     print()
     print(f'Result on test set: {results}')
-
     predictions = model.predict(images_test)
     print(f'Predictions are: {predictions}')
     print(f'Actual values are: {labels_test}')
 
+    # Find all wrong classified images
+    Wrong_classified = np.array([],dtype=int)
+    for i in range(images_test.shape[0]):
+        if CheckPrediction(predictions[i],labels_test[i]) == False:
+            Wrong_classified = np.append(Wrong_classified, i)
+
     # Show the testing image with opencv
-    i = 0
+    j = 0
+    i = Wrong_classified[j]
     while True:
         cv2.imshow(f'i: {i}, Pred.: {np.round(predictions[i],2)}, Lab.: {np.round(labels_test[i])}, Result: {CheckPrediction(predictions[i],labels_test[i])}', cv2.resize(images_test[i], dsize=(512, 512)))
 
@@ -110,20 +118,20 @@ def train_classifier():
             cv2.destroyAllWindows()
             break
         if cv2.waitKey(0) & 0xFF == ord('d'):
-            if i < labels_test.size-1:
-                i = i + 1
+            if j < Wrong_classified.size-1:#i <labels_test.size-1:
+                j = j + 1
+                i = Wrong_classified[j]
                 cv2.destroyAllWindows()
         if cv2.waitKey(0) & 0xFF == ord('a'):
-            if i > 0:
-                i = i - 1
+            if j > 0:
+                j = j - 1
+                i = Wrong_classified[j]
                 cv2.destroyAllWindows()
-
-#predictions = model.predict(x_test)
-#create_figure(0, predictions, x_test, y_test)
 
 def main():
     if do_training:
         train_classifier()
+    load_classifier()
 
 if __name__ == "__main__":
     main()

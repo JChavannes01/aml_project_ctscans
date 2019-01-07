@@ -1,3 +1,4 @@
 .vscode/
 data/
 env/
+models/CNN.pkl
