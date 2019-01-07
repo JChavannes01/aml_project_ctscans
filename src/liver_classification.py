@@ -4,6 +4,7 @@ import gzip
 import tensorflow as tf
 import numpy as np
 from sklearn.model_selection import train_test_split
+from sklearn.metrics import confusion_matrix
 import cv2
 import pickle
 
@@ -108,6 +109,28 @@ def load_classifier():
         if CheckPrediction(predictions[i],labels_test[i]) == False:
             Wrong_classified = np.append(Wrong_classified, i)
 
+    # Determine confusion matrix (use one test data)
+    predictions_list = np.array([])
+    for i in range(images_test.shape[0]):
+        if predictions[i,1] >= 0.5:
+            predictions_list = np.append(predictions_list, 1.)
+        else:
+            predictions_list = np.append(predictions_list, 0.)
+
+    con_matrix = confusion_matrix(labels_test, predictions_list)
+    print(f'Confustion matrix using test data: {con_matrix}')
+
+    # Determine number of slices containing liver
+    N_liver_train = np.count_nonzero(labels_train)
+    print(f'Number of slices containing liver (train data): {N_liver_train}')
+    print(f'Number of slices containing no liver (train data): {labels_train.size - N_liver_train}')
+    N_liver_test = np.count_nonzero(labels_test)
+    print(f'Number of slices containing liver (test data): {N_liver_test}')
+    print(f'Number of slices containing no liver (test data): {labels_test.size - N_liver_test}')
+    N_liver = N_liver_train + N_liver_test
+    print(f'Number of slices containing liver (all data): {N_liver}')
+    print(f'Number of slices containing no liver (all data): {labels_train.size + labels_test.size - N_liver}')
+    
     # Show the testing image with opencv
     j = 0
     i = Wrong_classified[j]
