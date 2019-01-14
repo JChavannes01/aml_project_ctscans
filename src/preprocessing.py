@@ -69,6 +69,38 @@ def preprocess_images():
             np.save(gzipfile, images)
         del nii_file, data, images
 
+def preprocess_segmentation():
+    # Converts all .nii segmentation files to .npy.gz (compressed numpy) files which contain only the liver segmentation (layer, x, y) = [background = 0, liver = 1]
+    seg_pattern = re.compile(r'segmentation-(\d+).nii')
+    segmentation_files = filter(lambda f: re.match(
+        seg_pattern, f), os.listdir(train_data_dir))
+    output_dimension = (128, 128)  # desired output size of each layer
+
+    for i, f in enumerate(segmentation_files):
+        print(f'Extracting segmentation from {f}')
+        nii_file = nib.load(os.path.join(train_data_dir, f))
+        data = nii_file.get_fdata()
+
+        segmentation = np.zeros(
+            (data.shape[-1], *output_dimension), dtype='uint8')  # (Z, X, Y)
+        for layer in range(data.shape[2]):
+            pic = data[:, :, layer]
+
+            # Delete the lesion segmentation
+            pic[pic == 2] = 1
+            pic = pic.astype('uint8', copy=False)
+
+            # Resize to the desired output dimension
+            pic = cv2.resize(pic, dsize=output_dimension)
+            segmentation[layer] = pic
+
+        file_num = re.match(seg_pattern, f)[1]
+        save_filepath = os.path.join(
+            output_dir, f'liver_segmentation-{file_num}.npy.gz')
+        with gzip.GzipFile(save_filepath, 'w') as gzipfile:
+            np.save(gzipfile, segmentation)
+        del nii_file, data, segmentation
+
 
 def load_test_labels():
     labels = np.load(os.path.join(output_dir, 'labels-28.npy'))
@@ -88,15 +120,29 @@ def load_test_images():
             cv2.destroyAllWindows()
             break
 
+def load_test_segmentation():
+    # Use gzip to load images since the files are compressed
+    with gzip.GzipFile(os.path.join(output_dir, 'liver_segmentation-0.npy.gz'), "r") as f:
+        images = np.load(f)
+
+    # Show the testing image with opencv
+    while True:
+        cv2.imshow('testing MRI', cv2.resize(images[67]*128, dsize=(512, 512)))
+
+        if cv2.waitKey(25) & 0xFF == ord('q'):
+            cv2.destroyAllWindows()
+            break
 
 def main():
     if not os.path.isdir(output_dir):
         os.mkdir(output_dir)
 
-    preprocess_labels()
-    preprocess_images()
-    load_test_labels()
-    load_test_images()
+    #preprocess_labels()
+    #preprocess_images()
+    #load_test_labels()
+    #load_test_images()
+    preprocess_segmentation()
+    load_test_segmentation()
 
 
 if __name__ == "__main__":
