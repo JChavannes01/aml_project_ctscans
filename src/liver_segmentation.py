@@ -115,13 +115,13 @@ def load_segmentation():
     with open(r"models/liver_segmentation.pkl", "wb") as f:
         pickle.dump([images_train, images_test, segmentation_train, segmentation_test, history], f)
     '''
-    results = model.evaluate(images_test, segmentation_test)
-    print()
-    print(f'Result on test set: {results}')
+    #results = model.evaluate(images_test, segmentation_test)
+    #print()
+    #print(f'Result on test set: {results}')
     
-    predictions = model.predict(images_test)
-    print(f'Predictions are: {predictions}')
-    print(f'Actual values are: {segmentation_test}')
+    #predictions = model.predict(images_test)
+    #print(f'Predictions are: {predictions}')
+    #print(f'Actual values are: {segmentation_test}')
     
     # Show accuracy on train and test data
     plt.figure(figsize=[8,6])
@@ -137,10 +137,21 @@ def load_segmentation():
     # Show the testing image with opencv
     i = 0
     while True:
+        pred = model.predict(images_test[i][np.newaxis])[0]*255
+        pred = pred.astype('uint8')
+        combined2 = np.zeros((128,128,3),dtype='uint8')
+        combined2[:,:,0] = images_test[i][:,:,0] #Blue
+        combined2[:,:,1] = segmentation_test[i][:,:,0]*255//3 #Green
+        combined2[:,:,2] = pred[:,:,0]//3 # Red
         acc = np.round(model.evaluate(images_test[i][np.newaxis],segmentation_test[i][np.newaxis])[1],2)
         cv2.imshow(f'image, i: {i}, accuracy: {acc}', cv2.resize(images_test[i], dsize=(512, 512)))
-        cv2.imshow(f'prediction, i: {i}, accuracy: {acc}', cv2.resize(predictions[i]*255, dsize=(512, 512)))
+        #cv2.imshow(f'prediction, i: {i}, accuracy: {acc}', cv2.resize(predictions[i]*255, dsize=(512, 512)))
+        cv2.imshow(f'prediction, i: {i}, accuracy: {acc}', cv2.resize(pred, dsize=(512, 512)))
         cv2.imshow(f'segmentation, i: {i},  accuracy: {acc}', cv2.resize(segmentation_test[i]*255, dsize=(512, 512)))
+        combined = cv2.addWeighted(images_test[i],0.5,pred,0.5,0)
+        cv2.imshow(f'combined, i: {i}, accuracy: {acc}', cv2.resize(combined, dsize=(512, 512)))
+        cv2.imshow(f'combined2, i: {i}, accuracy: {acc}', cv2.resize(combined2, dsize=(512, 512)))
+        
         if cv2.waitKey(0) & 0xFF == ord('q'):
             cv2.destroyAllWindows()
             break

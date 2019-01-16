@@ -97,13 +97,17 @@ def load_classifier():
     with open(r"models/CNN.pkl", 'rb') as f:
         images_train, images_test, labels_train, labels_test, history = pickle.load(f)
     
-    results = model.evaluate(images_test, labels_test)
+    results_test = model.evaluate(images_test, labels_test)
     print()
-    print(f'Result on test set: {results}')
+    print(f'Result on test set: {results_test}')
+    results_train = model.evaluate(images_train, labels_train)
+    print()
+    print(f'Result on train set: {results_train}')
+    '''
     predictions = model.predict(images_test)
     print(f'Predictions are: {predictions}')
     print(f'Actual values are: {labels_test}')
-
+    
     # Find all wrong classified images
     Wrong_classified = np.array([],dtype=int)
     for i in range(images_test.shape[0]):
@@ -131,7 +135,7 @@ def load_classifier():
     N_liver = N_liver_train + N_liver_test
     print(f'Number of slices containing liver (all data): {N_liver}')
     print(f'Number of slices containing no liver (all data): {labels_train.size + labels_test.size - N_liver}')
-
+    '''
     # Show accuracy on train and test data
     plt.figure(figsize=[8,6])
     plt.plot(history['acc'],'r',linewidth=3.0)
@@ -142,7 +146,7 @@ def load_classifier():
     plt.title('Accuracy Curves',fontsize=16)
     plt.grid()
     plt.show()
-    
+    '''
     # Show the testing image with opencv
     j = 0
     i = Wrong_classified[j]
@@ -162,7 +166,7 @@ def load_classifier():
                 j = j - 1
                 i = Wrong_classified[j]
                 cv2.destroyAllWindows()
-
+    '''
 def main():
     if do_training:
         train_classifier()

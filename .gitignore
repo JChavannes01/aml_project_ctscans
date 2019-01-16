@@ -2,3 +2,4 @@
 data/
 env/
 models/
+*__pycache__
