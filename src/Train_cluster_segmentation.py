@@ -83,7 +83,7 @@ def train_segmentation():
     model.save(model_path)
     pickle_path = os.path.join(output_dir, "unet_128_v{}.pkl".format(version))
     with open(pickle_path, "wb") as f:
-        pickle.dump([indices_train, indices_test, indices_validation, history.history, dice_coeff, con_matrix], f)
+        pickle.dump([indices_train, indices_test, indices_validation, history.history, dice_coeff, con_matrix, predictions], f)
 
 def main():
     # Checks to make sure we dont accidentally override our previous models.
