@@ -12,11 +12,11 @@ version = 2
 do_training = True
 
 # Define experiments to run
-dropout_0 = [0.05, 0.15, 0.25, 0.35, 0.45]
-dropout_1 = [0.05, 0.15, 0.25, 0.35, 0.45]
-dropout_2 = [0.05, 0.15, 0.25, 0.35, 0.45]
-dropout_3 = [0.3, 0.4, 0.5, 0.6, 0.7]
-experiments = len(dropout_0) * len(dropout_1) * len(dropout_2) * len(dropout_3)
+dropout_0 = [0.05, 0.15, 0.35, 0.45]
+dropout_1 = [0.05, 0.15, 0.35, 0.45]
+dropout_2 = [0.05, 0.15, 0.35, 0.45]
+dropout_3 = [0.3, 0.4, 0.6, 0.7]
+experiments = len(dropout_0) + len(dropout_1) + len(dropout_2) + len(dropout_3)
 df = pd.DataFrame(index=np.arange(experiments), columns=('dr_1', 'dr_2', 'dr_3', 'dr_4', 'accuracy_test'))
 
 # Directory where the preprocessed data is stored.
@@ -24,6 +24,7 @@ input_dir = "/deepstore/datasets/course/aml/group4/All_Data"
 output_dir = "/deepstore/datasets/course/aml/group4/models"
 
 def train_classifier():
+    global version
     # Load labels
     labels_pattern = re.compile(r'labels-(\d+).npy')
     labels_files = filter(lambda f: re.match(
@@ -56,49 +57,56 @@ def train_classifier():
     images_train, images_test, labels_train, labels_test, indices_train, indices_test = train_test_split(images, labels, range(images.shape[0]),test_size=0.2,random_state=42)
     images_train, images_validation, labels_train, labels_validation, indices_train, indices_validation = train_test_split(images_train, labels_train, indices_train, test_size=0.2,random_state=42)
 
+    def run_iteration(version, i, dropout_rates):
+        
+        # Checks to make sure we dont accidentally override our previous models.
+        if os.path.exists(os.path.join(output_dir, "v{}-exists".format(version))):
+            df.loc[i] = [-1]*5
+            return
+        # Add a placeholder file to indicate that this version has already been trained:
+        with open(os.path.join(output_dir, "v{}-exists".format(version)), 'w') as f:
+            pass
+
+        # Create model
+        model = get_cnn(dropout_rates)
+
+        # Start training
+        history = model.fit(images_train, labels_train, batch_size=128, epochs=10, validation_data=(images_validation,labels_validation))
+
+        # Determine accuracy on train, validation and test data
+        accuracy_train = model.evaluate(images_train, labels_train)
+        accuracy_validation = model.evaluate(images_validation, labels_validation)
+        accuracy_test = model.evaluate(images_test, labels_test)
+        accuracy = {"train": accuracy_train, "validation": accuracy_validation, "test": accuracy_test}
+
+        # Determine confusion matrix for test data
+        predictions = model.predict(images_test)
+        predictions_list = predictions[:,1] >= 0.5
+
+        con_matrix = confusion_matrix(labels_test, predictions_list)
+
+        # Save model and all data
+        df.loc[i] = dropout_rates + [accuracy_test]
+        model_path = os.path.join(output_dir, "CNN_v{}.h5".format(version))
+        model.save(model_path)
+        pickle_path = os.path.join(output_dir, "CNN_v{}.pkl".format(version))
+        
+        with open(pickle_path, "wb") as f:
+            pickle.dump([indices_train, indices_test, indices_validation, history.history, accuracy, con_matrix], f)
+        
+        df.to_csv(os.path.join(output_dir, 'experiments.txt'), sep='\t')
+
     i = 0
-    for dr_0 in dropout_0:
-        for dr_1 in dropout_1:
-            for dr_2 in dropout_2:
-                for dr_3 in dropout_3:
-                    # Create model
-                    model = get_cnn(dr_0, dr_1, dr_2, dr_3)
+    dropout_indices = [0]*len(dropout_0) + [1]*len(dropout_1) + [2]*len(dropout_2) + [3]*len(dropout_3)
+    for pos, val in zip(dropout_indices, dropout_0 + dropout_1 + dropout_2 + dropout_3):
+        dropout_rates = [0.25, 0.25, 0.25, 0.5]
+        dropout_rates[pos] = val
+        run_iteration(version, i, dropout_rates)
+        version += 1
+        i += 1
 
-                    # Start training
-                    history = model.fit(images_train, labels_train, batch_size=128, epochs=10, validation_data=(images_validation,labels_validation))
-
-                    # Determine accuracy on train, validation and test data
-                    accuracy_train = model.evaluate(images_train, labels_train)
-                    accuracy_validation = model.evaluate(images_validation, labels_validation)
-                    accuracy_test = model.evaluate(images_test, labels_test)
-                    accuracy = {"train": accuracy_train, "validation": accuracy_validation, "test": accuracy_test}
-
-                    # Determine confusion matrix for test data
-                    predictions = model.predict(images_test)
-                    predictions_list = predictions[:,1] >= 0.5
-
-                    con_matrix = confusion_matrix(labels_test, predictions_list)
-
-                    # Save model and all data
-                    df.loc[i] = [dr_0, dr_1, dr_2, dr_3, accuracy_test]
-                    model_path = os.path.join(output_dir, "CNN_v{}.h5".format(i))
-                    model.save(model_path)
-                    pickle_path = os.path.join(output_dir, "CNN_v{}.pkl".format(i))
-                    with open(pickle_path, "wb") as f:
-                        pickle.dump([indices_train, indices_test, indices_validation, history.history, accuracy, con_matrix], f)
-                    df.to_csv('experiments.txt', sep='\t')
-
-                    # Update the version index
-                    i += 1
 
 def main():
-    # Checks to make sure we dont accidentally override our previous models.
-    if os.path.exists("/deepstore/datasets/course/aml/group4/v{}-exists".format(version)):
-        raise ValueError("Version {} already exists, aborting training...".format(version))
-    # Add a placeholder file to indicate that this version has already been trained:
-    with open("/deepstore/datasets/course/aml/group4/v{}-exists".format(version), 'w') as f:
-        pass
-
     if do_training:
         train_classifier()
 
