@@ -14,13 +14,6 @@ do_training = True
 input_dir = "/local/aml_project_g4/All_Data"
 output_dir = "/local/aml_project_g4/models"
 
-# Checks to make sure we dont accidentally override our previous models.
-if os.path.exists("/local/aml_project_g4/models/v{}-exists".format(version)):
-    raise ValueError("Version {} already exists, aborting training...".format(version))
-# Add a placeholder file to indicate that this version has already been trained:
-with open("/local/aml_project_g4/models/v{}-exists".format(version), 'w') as f:
-    pass
-
 def train_classifier():
     # Load labels
     labels_pattern = re.compile(r'labels-(\d+).npy')
@@ -80,6 +73,13 @@ def train_classifier():
         pickle.dump([indices_train, indices_test, indices_validation, history.history, accuracy, con_matrix], f)
 
 def main():
+    # Checks to make sure we dont accidentally override our previous models.
+    if os.path.exists("/local/aml_project_g4/models/v{}-exists".format(version)):
+        raise ValueError("Version {} already exists, aborting training...".format(version))
+    # Add a placeholder file to indicate that this version has already been trained:
+    with open("/local/aml_project_g4/models/v{}-exists".format(version), 'w') as f:
+        pass
+
     if do_training:
         train_classifier()
 
