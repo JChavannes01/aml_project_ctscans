@@ -11,8 +11,8 @@ version = 2
 do_training = True
 
 # Directory where the preprocessed data is stored.
-input_dir = "/local/aml_project_g4/All_Data"
-output_dir = "/local/aml_project_g4/models"
+input_dir = "/deepstore/datasets/course/aml/group4/All_Data"
+output_dir = "/deepstore/datasets/course/aml/group4/models"
 
 def train_classifier():
     # Load labels
@@ -74,10 +74,10 @@ def train_classifier():
 
 def main():
     # Checks to make sure we dont accidentally override our previous models.
-    if os.path.exists("/local/aml_project_g4/models/v{}-exists".format(version)):
+    if os.path.exists("/deepstore/datasets/course/aml/group4/v{}-exists".format(version)):
         raise ValueError("Version {} already exists, aborting training...".format(version))
     # Add a placeholder file to indicate that this version has already been trained:
-    with open("/local/aml_project_g4/models/v{}-exists".format(version), 'w') as f:
+    with open("/deepstore/datasets/course/aml/group4/v{}-exists".format(version), 'w') as f:
         pass
 
     if do_training:
