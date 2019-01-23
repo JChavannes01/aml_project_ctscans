@@ -16,10 +16,10 @@ def add_images_from_file(images_array, file_num):
 
 def add_segmentation_from_file(segmentation_array, file_num):
     with gzip.GzipFile(os.path.join(INPUT_DIR, 'liver_segmentation-{}.npy.gz'.format(file_num)), "r") as f:
-        if segmentation_array == None or segmentation_array.size == 0:
-            segmentation_array = np.load(f)
+        if segmentation_array.size == 0:
+            return np.load(f)
         else:
-            segmentation_array = np.concatenate((segmentation_array, np.load(f)), axis=0)
+            return np.concatenate((segmentation_array, np.load(f)), axis=0)
 
 def load_test_val_train_files(version):
     """Load the test, validation and train labels and images from the data folder.
@@ -76,46 +76,50 @@ def load_test_val_train_files_segmentation(version):
     labels_files = filter(lambda f: re.match(
         labels_pattern, f), os.listdir(INPUT_DIR))
     
-    images_train, images_validation, images_test = None, None, None
-    segmentation_train, segmentation_validation, segmentation_test = None, None, None
+    images_train, images_validation, images_test = np.array([]), np.array([]), np.array([])
+    segmentation_train, segmentation_validation, segmentation_test = np.array([]), np.array([]), np.array([])
+    labels_train, labels_validation, labels_test = list(), list(), list()
 
     for f in labels_files:
         # Load images (stack all frames vertically) 
         # Loading images this way ensures that labels and images have the same order
-        file_num = re.match(labels_pattern, f).group(1)
+        file_num = int(re.match(labels_pattern, f).group(1))
         
-        new_labels = np.load(os.path.join(INPUT_DIR, f))
+        new_labels = np.load(os.path.join(INPUT_DIR, f)).tolist()
         if file_num % 5 == 0:
             # Test file
             labels_test += new_labels
-            add_images_from_file(images_test, file_num)
-            add_segmentation_from_file(segmentation_test, file_num)
+            images_test = add_images_from_file(images_test, file_num)
+            segmentation_test = add_segmentation_from_file(segmentation_test, file_num)
         elif file_num % 5 == 1:
             # Validation file
             labels_validation += new_labels
-            add_images_from_file(images_validation, file_num)
-            add_segmentation_from_file(segmentation_validation, file_num)
+            images_validation = add_images_from_file(images_validation, file_num)
+            segmentation_validation = add_segmentation_from_file(segmentation_validation, file_num)
         else:
             # Train file
             labels_train += new_labels
-            add_images_from_file(images_train, file_num)
-            add_segmentation_from_file(segmentation_train, file_num)
+            images_train = add_images_from_file(images_train, file_num)
+            segmentation_train = add_segmentation_from_file(segmentation_train, file_num)
+    # Convert labels to np arrays
+    labels_test = np.array(labels_test, dtype=int)
+    labels_validation = np.array(labels_validation, dtype=int)
+    labels_train = np.array(labels_train, dtype=int)
 
-    for imgs,seg,lab in zip([images_test, images_validation, images_train],
-            [segmentation_test, segmentation_validation, segmentation_train], [labels_test, labels_validation, labels_train]):
-        #Remove all slices containing no liver
-        imgs = imgs[lab == 1,:,:]
-        seg = seg[lab == 1,:,:]
+    # Trim non interesting rows
+    images_test = images_test[labels_test==1,:,:]
+    segmentation_test = segmentation_test[labels_test==1,:,:,np.newaxis]
+    
+    images_validation = images_validation[labels_validation==1,:,:]
+    segmentation_validation = segmentation_validation[labels_validation==1,:,:,np.newaxis]
+    
+    images_train = images_train[labels_train==1,:,:]
+    segmentation_train = segmentation_train[labels_train==1,:,:,np.newaxis]
 
-    for imgs in [images_test, images_validation, images_train]:
-        # Add new dimension (explicit mention that we have only one color channel)
-        imgs = imgs[:,:,:,np.newaxis]
-        
-        # Change range from 0-255 to 0-1 (datatype change from uint8 to float64)
-        imgs = imgs / 255.0
-
-    for lbls in [labels_test, labels_validation, labels_train]:
-        # Change datatype labels to boolean numpy array
-        lbls = np.array(lbls, dtype=bool)
+    # Add new dimension (explicit mention that we have only one color channel)
+    # Change range from 0-255 to 0-1 (datatype change from uint8 to float64)
+    images_test = images_test[:,:,:,np.newaxis] / 255.0
+    images_validation = images_validation[:,:,:,np.newaxis] / 255.0
+    images_train = images_train[:,:,:,np.newaxis] / 255.0
     
     return images_train, images_validation, images_test, segmentation_train, segmentation_validation, segmentation_test
