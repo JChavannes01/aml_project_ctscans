@@ -38,6 +38,8 @@ def train_classifier():
         # Create model
         model = get_cnn(dropout_rates)
 
+        accuracyHistory = AccuracyHistory(model, images_train, labels_train)
+
         # Define callbacks
         callbacks = [tf.keras.callbacks.ModelCheckpoint(monitor='val_acc',
                 filepath=os.path.join(OUTPUT_DIR, "{}_v{}.h5".format(model_id, version)),
@@ -45,12 +47,12 @@ def train_classifier():
                 save_weights_only=False,
                 mode='max',
                 period=1),
-                accuracyHistory()]
+                accuracyHistory]
 
         # Start training
         history = model.fit(images_train, labels_train, batch_size=128, epochs=10, validation_data=(images_validation,labels_validation), callbacks=callbacks)
 
-        accuracyHistory.add_validation_accuracy(self, history.history)
+        accuracyHistory.add_validation_accuracy(history.history)
 
         # Determine accuracy on train, validation and test data
         accuracy_train = model.evaluate(images_train, labels_train)
