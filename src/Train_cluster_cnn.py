@@ -54,6 +54,7 @@ def train_classifier():
         # Start training
         history = model.fit(images_train, labels_train, batch_size=128, epochs=25, validation_data=(images_validation,labels_validation), callbacks=callbacks)
 
+        # Add validation accuracy to accuracyHistory class
         accuracyHistory.add_validation_accuracy(history.history)
 
         # Determine accuracy on train, validation and test data
