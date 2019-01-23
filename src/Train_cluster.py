@@ -41,8 +41,9 @@ def train_classifier():
         accuracyHistory = AccuracyHistory(model, images_train, labels_train)
 
         # Define callbacks
+        model_path = os.path.join(OUTPUT_DIR, "{}_v{}.h5".format(model_id, version)
         callbacks = [tf.keras.callbacks.ModelCheckpoint(monitor='val_acc',
-                filepath=os.path.join(OUTPUT_DIR, "{}_v{}.h5".format(model_id, version)),
+                filepath=model_path),
                 save_best_only=True,
                 save_weights_only=False,
                 mode='max',
@@ -50,11 +51,12 @@ def train_classifier():
                 accuracyHistory]
 
         # Start training
-        history = model.fit(images_train, labels_train, batch_size=128, epochs=10, validation_data=(images_validation,labels_validation), callbacks=callbacks)
+        history = model.fit(images_train, labels_train, batch_size=128, epochs=25, validation_data=(images_validation,labels_validation), callbacks=callbacks)
 
         accuracyHistory.add_validation_accuracy(history.history)
 
         # Determine accuracy on train, validation and test data
+        model.load_weights(model_path)
         accuracy_train = model.evaluate(images_train, labels_train)
         accuracy_validation = model.evaluate(images_validation, labels_validation)
         accuracy_test = model.evaluate(images_test, labels_test)
@@ -83,7 +85,6 @@ def train_classifier():
         run_iteration(version, i, dropout_rates)
         version += 1
         i += 1
-
 
 def main():
     if do_training:
