@@ -5,5 +5,5 @@ module load nvidia/cuda-9.0_cudnn-7.3
 
 projectfolder=/deepstore/datasets/course/aml/group4
 source $projectfolder/env/bin/activate
-python $projectfolder/src/Train_cluster_drr.py
+python $projectfolder/src/Train_cluster_CNN.py
 deactivate

@@ -4,13 +4,13 @@ import tensorflow as tf
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix
 import pickle
-from models import *
+from models import AccuracyHistory, get_cnn
 import pandas as pd
 from util import OUTPUT_DIR, load_test_val_train_files
 
-version = 200
+version = 101
 do_training = True
-model_id = "CNN_drr"
+model_id = "CNN"
 
 # Define experiments to run
 dropout_0 = [0.05, 0.15, 0.35, 0.45]
@@ -18,7 +18,8 @@ dropout_1 = [0.05, 0.15, 0.35, 0.45]
 dropout_2 = [0.05, 0.15, 0.35, 0.45]
 dropout_3 = [0.3, 0.4, 0.6, 0.7]
 experiments = len(dropout_0) + len(dropout_1) + len(dropout_2) + len(dropout_3)
-df_experiments = pd.DataFrame(index=np.arange(experiments), columns=('version', 'dr_1', 'dr_2', 'dr_3', 'dr_4', 'accuracy_test'))
+df_experiments = pd.DataFrame(index=np.arange(1), columns=('version', 'dr_1', 'dr_2', 'dr_3', 'dr_4', 'accuracy_test'))
+# df_experiments = pd.DataFrame(index=np.arange(experiments), columns=('version', 'dr_1', 'dr_2', 'dr_3', 'dr_4', 'accuracy_test'))
 
 
 def train_classifier():
@@ -28,11 +29,11 @@ def train_classifier():
     
     def run_iteration(version, i, dropout_rates):
         # Checks to make sure we dont accidentally override our previous models.
-        if os.path.exists(os.path.join(OUTPUT_DIR, "v{}-exists".format(version))):
+        if os.path.exists(os.path.join(OUTPUT_DIR, "{}_v{}-exists".format(model_id, version))):
             df_experiments.loc[i] = [-1]*df_experiments.shape[1]
             return
         # Add a placeholder file to indicate that this version has already been trained:
-        with open(os.path.join(OUTPUT_DIR, "v{}-exists".format(version)), 'w') as f:
+        with open(os.path.join(OUTPUT_DIR, "{}_v{}-exists".format(model_id, version)), 'w') as f:
             pass
 
         # Create model
@@ -41,9 +42,9 @@ def train_classifier():
         accuracyHistory = AccuracyHistory(model, images_train, labels_train)
 
         # Define callbacks
-        model_path = os.path.join(OUTPUT_DIR, "{}_v{}.h5".format(model_id, version)
+        model_path = os.path.join(OUTPUT_DIR, "{}_v{}.h5".format(model_id, version))
         callbacks = [tf.keras.callbacks.ModelCheckpoint(monitor='val_acc',
-                filepath=model_path),
+                filepath=model_path,
                 save_best_only=True,
                 save_weights_only=False,
                 mode='max',
@@ -78,14 +79,16 @@ def train_classifier():
         
         df_experiments.to_csv(os.path.join(OUTPUT_DIR, 'experiments_{}.txt'.format(model_id)), sep='\t')
 
-    i = 0
-    dropout_indices = [0]*len(dropout_0) + [1]*len(dropout_1) + [2]*len(dropout_2) + [3]*len(dropout_3)
-    for pos, val in zip(dropout_indices, dropout_0 + dropout_1 + dropout_2 + dropout_3):
-        dropout_rates = [0.25, 0.25, 0.25, 0.5] # Defaults
-        dropout_rates[pos] = val
-        run_iteration(version, i, dropout_rates)
-        version += 1
-        i += 1
+    run_iteration(version, 0, [0]*4)
+        
+    # i = 0
+    # dropout_indices = [0]*len(dropout_0) + [1]*len(dropout_1) + [2]*len(dropout_2) + [3]*len(dropout_3)
+    # for pos, val in zip(dropout_indices, dropout_0 + dropout_1 + dropout_2 + dropout_3):
+    #     dropout_rates = [0.25, 0.25, 0.25, 0.5] # Defaults
+    #     dropout_rates[pos] = val
+    #     run_iteration(version, i, dropout_rates)
+    #     version += 1
+    #     i += 1
 
 def main():
     if do_training:
