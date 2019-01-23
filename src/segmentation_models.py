@@ -1,9 +1,24 @@
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Input, concatenate, Conv2D, MaxPooling2D, Activation, UpSampling2D, BatchNormalization
 from tensorflow.keras.optimizers import RMSprop
+from tensorflow.keras.callbacks import Callback
 
 from losses import bce_dice_loss, dice_loss, weighted_bce_dice_loss, weighted_dice_loss, dice_coeff
 
+class AccuracyHistory(Callback):
+    def __init__(self, model, images_train, labels_train):
+        self.model = model
+        self.images_train = images_train
+        self.labels_train = labels_train
+    def on_train_begin(self, logs=None):
+        self.myHistory = {b"train_loss": [], b"train_dice_coeff": [], b"val_loss": [], b"val_dice_coeff": []}
+    def on_epoch_end(self, epoch, logs=None):
+        train_result = self.model.evaluate(x=self.images_train, y=self.labels_train, verbose=0)
+        self.myHistory[b"train_loss"].append(train_result[0])
+        self.myHistory[b"train_dice_coeff"].append(train_result[1])
+    def add_validation_accuracy(self, history_from_fit_function):
+        self.myHistory[b"val_loss"] = history_from_fit_function[b"val_loss"]
+        self.myHistory[b"val_dice_coeff"] = history_from_fit_function[b"val_dice_coeff"]
 
 def get_unet_128(input_shape=(128, 128, 3),
                  num_classes=1):
