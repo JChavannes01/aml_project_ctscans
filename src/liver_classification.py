@@ -33,12 +33,14 @@ def load_classifier():
     # Print confusion matrix
     print(f"Confusion matrix of best saved model (for test data): {con_matrix}")
 
-    # Show accuracy on train and test data
+    # Show accuracy on train and validation data
     hor_axis = 1+np.arange(len(myHistory[b'train_acc']))
+    max_indice = np.argmax(myHistory[b'val_acc'])
     plt.figure(figsize=[8,6])
     plt.plot(hor_axis, myHistory[b'train_acc'],'r',linewidth=3.0)
     plt.plot(hor_axis, myHistory[b'val_acc'],'b',linewidth=3.0)
-    plt.legend(['Training Accuracy', 'Validation Accuracy'],fontsize=18)
+    plt.plot(hor_axis[max_indice],accuracy[b"test"][1],'k+',markersize=14.0)
+    plt.legend(['Training Accuracy', 'Validation Accuracy', 'Test Accuracy'],fontsize=18)
     plt.xlabel('Epochs ',fontsize=16)
     plt.ylabel('Accuracy',fontsize=16)
     plt.title('Accuracy Curves',fontsize=16)
