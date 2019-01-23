@@ -1,6 +1,7 @@
 import os
 import re
 import numpy as np
+import tensorflow as tf
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix
 import gzip
@@ -70,8 +71,19 @@ def train_classifier():
         # Create model
         model = get_cnn(dropout_rates)
 
+        # Define callbacks
+        callbacks = [tf.keras.callbacks.ModelCheckpoint(monitor='val_acc',
+                filepath=os.path.join(output_dir, "EditThis{}.h5".format(version)),
+                save_best_only=True,
+                save_weights_only=False,
+                mode='max',
+                period=1),
+                accuracyHistory()]
+
         # Start training
-        history = model.fit(images_train, labels_train, batch_size=128, epochs=10, validation_data=(images_validation,labels_validation))
+        history = model.fit(images_train, labels_train, batch_size=128, epochs=10, validation_data=(images_validation,labels_validation), callbacks=callbacks)
+
+        accuracyHistory.add_validation_accuracy(self, history.history)
 
         # Determine accuracy on train, validation and test data
         accuracy_train = model.evaluate(images_train, labels_train)
@@ -92,7 +104,7 @@ def train_classifier():
         pickle_path = os.path.join(output_dir, "CNN_v{}.pkl".format(version))
         
         with open(pickle_path, "wb") as f:
-            pickle.dump([indices_train, indices_test, indices_validation, history.history, accuracy, con_matrix], f)
+            pickle.dump([indices_train, indices_test, indices_validation, accuracyHistory.myHistory, accuracy, con_matrix], f)
         
         df.to_csv(os.path.join(output_dir, 'experiments.txt'), sep='\t')
 

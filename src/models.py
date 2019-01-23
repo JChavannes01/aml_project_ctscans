@@ -1,4 +1,15 @@
 import tensorflow as tf
+
+class accuracyHistory(tf.keras.callbacks.Callback):
+    def on_train_begin(self, logs=None):
+        self.myHistory = {b"train_loss" = [], b"train_acc" = [], b"val_loss" = [], b"val_acc" = []}
+    def on_epoch_end(self, epoch, logs=None):
+        train_result = model.evaluate(x=images_train, y=labels_train, verbose=0)
+        self.myHistory[b"train_loss"].append(train_result[0])
+        self.myHistory[b"train_acc"].append(train_result[1])
+    def add_validation_accuracy(self, history_from_fit_function)
+        self.myHistory[b"val_loss"] = history_from_fit_function[b"val_loss"]
+        self.myHistory[b"val_acc"] = history_from_fit_function[b"val_acc"]
     
 def get_basic_denselayers():
     model = tf.keras.models.Sequential([tf.keras.layers.Flatten(),
