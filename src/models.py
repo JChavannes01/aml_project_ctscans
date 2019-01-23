@@ -1,10 +1,13 @@
 import tensorflow as tf
     
-def get_basic_denselayers():
-    model = tf.keras.models.Sequential([tf.keras.layers.Flatten(),
+def get_basic_denselayers(dropout_rate):
+    model = tf.keras.models.Sequential([tf.keras.layers.Flatten(input_shape=(128, 128, 1)),
                 tf.keras.layers.Dense(512, activation=tf.nn.relu),
-                tf.keras.layers.Dropout(0.2),
+                tf.keras.layers.Dropout(dropout_rate),
                 tf.keras.layers.Dense(2, activation=tf.nn.softmax)])
+
+    model.compile(optimizer='adam', loss='sparse_categorical_crossentropy',
+                metrics=['accuracy'])
 
     return model
 
