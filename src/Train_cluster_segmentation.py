@@ -6,8 +6,9 @@ from sklearn.metrics import confusion_matrix
 import gzip
 import pickle
 from segmentation_models import get_unet_128
+import tensorflow as tf
 
-version = 1
+version = 2
 do_training = True
 
 # Directory where the preprocessed data is stored.
@@ -63,8 +64,12 @@ def train_segmentation():
     # Create model
     model = get_unet_128((128, 128, 1), 1)
 
+    callbacks = [tf.keras.callbacks.ModelCheckpoint(monitor='val_loss',
+                    filepath=os.path.join(output_dir, "unet_128_v{}.h5".format(version)),
+                    save_best_only=True,
+                    save_weights_only=False)]
     # Start training
-    history = model.fit(images_train, segmentation_train, batch_size=32, epochs=12, validation_data=(images_validation,segmentation_validation))
+    history = model.fit(images_train, segmentation_train, batch_size=32, epochs=18, validation_data=(images_validation,segmentation_validation), callbacks=callbacks)
 
     # Determine dice coefficient on train, validation and test data
     dice_coeff_train = model.evaluate(images_train, segmentation_train)
