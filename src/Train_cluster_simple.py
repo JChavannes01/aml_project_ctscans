@@ -3,11 +3,12 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix
 import pickle
-from models import *
+from models import AccuracyHistory, get_basic_denselayers
 import pandas as pd
 from util import OUTPUT_DIR, load_test_val_train_files
+import tensorflow as tf
 
-version = 1
+version = 101
 do_training = True
 model_id = "basicDense"
 
@@ -33,10 +34,27 @@ def train_classifier():
         # Create model
         model = get_basic_denselayers(dropout_rate)
 
+        accuracyHistory = AccuracyHistory(model, images_train, labels_train)
+
+        # Define callbacks
+        model_path = os.path.join(OUTPUT_DIR, "{}_v{}.h5".format(model_id, version))
+        callbacks = [tf.keras.callbacks.ModelCheckpoint(monitor='val_acc',
+                filepath=model_path,
+                save_best_only=True,
+                save_weights_only=False,
+                mode='max',
+                period=1),
+                accuracyHistory]
+
         # Start training
-        history = model.fit(images_train, labels_train, batch_size=128, epochs=10, validation_data=(images_validation,labels_validation))
+        print("images_validation shape: {} -- labels_validation.shape: {}".format(images_validation.shape, labels_validation.shape))
+        history = model.fit(images_train, labels_train, batch_size=128, epochs=25, validation_data=(images_validation,labels_validation), callbacks=callbacks)
+
+        accuracyHistory.add_validation_accuracy(history.history)
+
 
         # Determine accuracy on train, validation and test data
+        model.load_weights(model_path)
         accuracy_train = model.evaluate(images_train, labels_train)
         accuracy_validation = model.evaluate(images_validation, labels_validation)
         accuracy_test = model.evaluate(images_test, labels_test)
@@ -50,12 +68,10 @@ def train_classifier():
 
         # Save model and all data
         df_experiments.loc[i] = [version, dropout_rate, accuracy_test]
-        model_path = os.path.join(OUTPUT_DIR, "{}_v{}.h5".format(model_id, version))
-        model.save(model_path)
         pickle_path = os.path.join(OUTPUT_DIR, "{}_v{}.pkl".format(model_id, version))
         
         with open(pickle_path, "wb") as f:
-            pickle.dump([history.history, accuracy, con_matrix], f)
+            pickle.dump([accuracyHistory.myHistory, accuracy, con_matrix], f)
         
         df_experiments.to_csv(os.path.join(OUTPUT_DIR, 'experiments_{}.txt'.format(model_id)), sep='\t')
 
