@@ -7,7 +7,7 @@ import pickle
 import matplotlib.pyplot as plt
 from segmentation_models import get_unet_128
 
-version = 1
+version = 2
 
 # Directory where the preprocessed data is stored.
 input_dir = r"data\All_Data"
@@ -84,10 +84,9 @@ def load_segmentation_cluster():
     # Load model
     model = get_unet_128((128, 128, 1), 1)
     model.load_weights(os.path.join(output_dir, "unet_128_v{}.h5".format(version)))
-
     # Load data saved by cluster
     with open(os.path.join(output_dir, "unet_128_v{}.pkl".format(version)), 'rb') as f:
-        indices_train, indices_test, indices_validation, history, dice_coeff, con_matrix, predictions = pickle.load(f)
+        indices_train, indices_test, indices_validation, history, dice_coeff, con_matrix, predictions = pickle.load(f,encoding='bytes')
     
     # Load images and do preprocessing
     lab_pattern = re.compile(r'labels-(\d+).npy')
@@ -131,23 +130,28 @@ def load_segmentation_cluster():
     labels = labels.astype(bool, copy=False)
     
     # Split data in train, validation and test set (same as done by cluster)
+    images_train = images[indices_train]
+    images_validation = images[indices_validation]
     images_test = images[indices_test]
-    images_train = np.delete(images, indices_test, axis=0)
-    images_validation = images_train[indices_validation]
-    images_train = images_train[indices_train]
+    segmentation_train = segmentation[indices_train]
+    segmentation_validation = segmentation[indices_validation]
+    segmentation_test = segmentation[indices_test]
 
     # Show dice coefficients
-    print("Dice coefficient on train data: {}".format(dice_coeff["train"]))
-    print("Dice coefficient on validation data: {}".format(dice_coeff["validation"]))
-    print("Dice coefficient on test data: {}".format(dice_coeff["test"]))
+    print("Dice coefficient on train data: {}".format(dice_coeff[b"train"][1]))
+    print("Dice coefficient on validation data: {}".format(dice_coeff[b"validation"][1]))
+    print("Dice coefficient on test data: {}".format(dice_coeff[b"test"][1]))
 
     # Show confusion matrix for test set
     print("Confusion matrix for test set: {}".format(con_matrix))
+
+    print(history[b'val_dice_coeff'])
+    print(history[b'dice_coeff'])
     
     # Show dice coefficient on train and validation data as function of epoch
     plt.figure(figsize=[8,6])
-    plt.plot(history['dice_coeff'],'r',linewidth=3.0)
-    plt.plot(history['val_dice_coeff'],'b',linewidth=3.0)
+    plt.plot(history[b'dice_coeff'],'r',linewidth=3.0)
+    plt.plot(history[b'val_dice_coeff'],'b',linewidth=3.0)
     plt.legend(['Training dice_coeff', 'Validation dice_coeff'],fontsize=18)
     plt.xlabel('Epochs ',fontsize=16)
     plt.ylabel('Dice coeff',fontsize=16)
@@ -158,17 +162,19 @@ def load_segmentation_cluster():
     # Show images from the test set with openCV
     i = 0
     while True:
+        predictions_t = model.predict(images_test[i][np.newaxis])
+        #predictions_t = predictions[i][np.newaxis]
         combined2 = np.zeros((128,128,3))
-        combined2[:,:,0] = images_test[i][:,:,0] #Blue
-        combined2[:,:,1] = segmentation_test[i][:,:,0]*255.//3 #Green
-        combined2[:,:,2] = predictions[:,:,0]*255.//3 # Red
+        combined2[:,:,0] = images_test[i,:,:,0] #Blue
+        combined2[:,:,1] = segmentation_test[i,:,:,0]/2 #Green
+        combined2[:,:,2] = predictions_t[0,:,:,0]/2 # Red
         dice = np.round(model.evaluate(images_test[i][np.newaxis],segmentation_test[i][np.newaxis])[1],2)
         cv2.imshow(f'image, i: {i}, dice_coeff: {dice}', cv2.resize(images_test[i], dsize=(512, 512)))
-        #cv2.imshow(f'prediction, i: {i}, accuracy: {acc}', cv2.resize(predictions[i]*255, dsize=(512, 512)))
-        cv2.imshow(f'prediction, i: {i}, dice_coeff: {dice}', cv2.resize(pred, dsize=(512, 512)))
-        cv2.imshow(f'segmentation, i: {i},  dice_coeff: {acc}', cv2.resize(segmentation_test[i]*255, dsize=(512, 512)))
-        combined = cv2.addWeighted(images_test[i],0.5,predictions[i],0.5,0)
-        cv2.imshow(f'combined, i: {i}, dice_coeff: {dice}', cv2.resize(combined, dsize=(512, 512)))
+        #cv2.imshow(f'prediction, i: {i}, accuracy: {acc}', cv2.resize(predictions_t[0]*255, dsize=(512, 512)))
+        cv2.imshow(f'prediction, i: {i}, dice_coeff: {dice}', cv2.resize(predictions_t[0]*255., dsize=(512, 512)))
+        cv2.imshow(f'segmentation, i: {i},  dice_coeff: {dice}', cv2.resize(segmentation_test[i]*255., dsize=(512, 512)))
+        #combined = cv2.addWeighted(images_test[i],0.5,predictions_t[0],0.5,0)
+        #cv2.imshow(f'combined, i: {i}, dice_coeff: {dice}', cv2.resize(combined, dsize=(512, 512)))
         cv2.imshow(f'combined2, i: {i}, dice_coeff: {dice}', cv2.resize(combined2, dsize=(512, 512)))
         
         if cv2.waitKey(0) & 0xFF == ord('q'):

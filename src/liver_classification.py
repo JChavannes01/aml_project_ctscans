@@ -92,18 +92,18 @@ def train_classifier():
         pickle.dump([images_train, images_test, labels_train, labels_test, history.history], f)
 
 def load_classifier():
-    model = tf.keras.models.load_model(r"models/CNN.h5")
+    #model = tf.keras.models.load_model(r"models/CNN.h5")
     
-    with open(r"models/CNN.pkl", 'rb') as f:
-        images_train, images_test, labels_train, labels_test, history = pickle.load(f)
-    
+    with open(r"models/Presentation/CNN_v13.pkl", 'rb') as f:
+        indices_train, indices_test, indices_validation, history, accuracy, con_matrix = pickle.load(f,encoding='bytes')
+    '''
     results_test = model.evaluate(images_test, labels_test)
     print()
     print(f'Result on test set: {results_test}')
     results_train = model.evaluate(images_train, labels_train)
     print()
     print(f'Result on train set: {results_train}')
-    '''
+    
     predictions = model.predict(images_test)
     print(f'Predictions are: {predictions}')
     print(f'Actual values are: {labels_test}')
@@ -136,10 +136,12 @@ def load_classifier():
     print(f'Number of slices containing liver (all data): {N_liver}')
     print(f'Number of slices containing no liver (all data): {labels_train.size + labels_test.size - N_liver}')
     '''
+    print(len(indices_test))
+    print(accuracy)
     # Show accuracy on train and test data
     plt.figure(figsize=[8,6])
-    plt.plot(history['acc'],'r',linewidth=3.0)
-    plt.plot(history['val_acc'],'b',linewidth=3.0)
+    plt.plot(history[b'acc'],'r',linewidth=3.0)
+    plt.plot(history[b'val_acc'],'b',linewidth=3.0)
     plt.legend(['Training Accuracy', 'Validation Accuracy'],fontsize=18)
     plt.xlabel('Epochs ',fontsize=16)
     plt.ylabel('Accuracy',fontsize=16)
