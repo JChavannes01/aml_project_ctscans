@@ -18,15 +18,17 @@ def train_segmentation():
     # Create model
     model = get_unet_128((128, 128, 1), 1)
 
-        # Define callbacks
-        model_path = os.path.join(OUTPUT_DIR, "{}_v{}.h5".format(model_id, version))
-        callbacks = [tf.keras.callbacks.ModelCheckpoint(monitor='val_acc',
-                filepath=model_path,
-                save_best_only=True,
-                save_weights_only=False,
-                mode='max',
-                period=1),
-                accuracyHistory]
+    accuracyHistory = AccuracyHistory(model, images_train, segmentation_train)
+
+    # Define callbacks
+    model_path = os.path.join(OUTPUT_DIR, "{}_v{}.h5".format(model_id, version))
+    callbacks = [tf.keras.callbacks.ModelCheckpoint(monitor='val_acc',
+            filepath=model_path,
+            save_best_only=True,
+            save_weights_only=False,
+            mode='max',
+            period=1),
+            accuracyHistory]
 
     # Start training
     history = model.fit(images_train, segmentation_train, batch_size=32, epochs=18, validation_data=(images_validation,segmentation_validation), callbacks=callbacks)
