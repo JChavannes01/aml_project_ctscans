@@ -15,9 +15,15 @@ model_id = "unet_128"
 
 
 def apply_brightness(x_batch, y_batch):
+    u = (np.random.random()-0.5) / 2.5
+    if u < 0:
+        x_batch = x_batch/(1+np.abs(u))
+    else:
+        x_batch = (x_batch + np.abs(u))/(1+np.abs(u))
     return x_batch, y_batch
 
 def apply_contrast(x_batch, y_batch):
+    x_batch = cv2.equalizeHist(x_batch)
     return x_batch, y_batch
 
 def apply_hflip(x_batch, y_batch):
