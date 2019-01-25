@@ -52,3 +52,32 @@ def get_cnn(drrs=[0.25, 0.25, 0.25, 0.5]):
               metrics=['accuracy'])
     
     return model
+
+def get_prelu_cnn():
+    model = tf.keras.models.Sequential()
+    model.add(tf.keras.layers.Conv2D(32, (3, 3), padding='same', input_shape=(128,128,1)))
+    model.add(tf.keras.layers.PReLU(alpha_initializer='zeros', weights=None))
+    model.add(tf.keras.layers.Conv2D(32, (3, 3)))
+    model.add(tf.keras.layers.PReLU(alpha_initializer='zeros', weights=None))
+    model.add(tf.keras.layers.MaxPooling2D(pool_size=(2, 2)))
+    model.add(tf.keras.layers.Dropout(0.25))
+
+    model.add(tf.keras.layers.Conv2D(64, (3, 3), padding='same'))
+    model.add(tf.keras.layers.PReLU(alpha_initializer='zeros', weights=None))
+    model.add(tf.keras.layers.Conv2D(64, (3, 3)))
+    model.add(tf.keras.layers.PReLU(alpha_initializer='zeros', weights=None))
+    model.add(tf.keras.layers.MaxPooling2D(pool_size=(2, 2)))
+    model.add(tf.keras.layers.Dropout(0.25))
+
+    model.add(tf.keras.layers.Conv2D(64, (3, 3), padding='same'))
+    model.add(tf.keras.layers.PReLU(alpha_initializer='zeros', weights=None))
+    model.add(tf.keras.layers.Conv2D(64, (3, 3)))
+    model.add(tf.keras.layers.PReLU(alpha_initializer='zeros', weights=None))
+    model.add(tf.keras.layers.MaxPooling2D(pool_size=(2, 2)))
+    model.add(tf.keras.layers.Dropout(0.25))
+
+    model.add(tf.keras.layers.Flatten())
+    model.add(tf.keras.layers.Dense(512))
+    model.add(tf.keras.layers.PReLU(alpha_initializer='zeros', weights=None))
+    model.add(tf.keras.layers.Dropout(0.5))
+    model.add(tf.keras.layers.Dense(2, activation='softmax'))
