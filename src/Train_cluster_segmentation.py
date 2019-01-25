@@ -23,7 +23,9 @@ def apply_brightness(x_batch, y_batch):
     return x_batch, y_batch
 
 def apply_contrast(x_batch, y_batch):
-    x_batch = cv2.equalizeHist(x_batch)
+    x_batch = 255.*x_batch
+    x_batch = cv2.equalizeHist(x_batch.astype('uint8'))
+    x_batch = x_batch/255.
     return x_batch, y_batch
 
 def apply_hflip(x_batch, y_batch):
